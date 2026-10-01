@@ -1,11 +1,11 @@
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import{getDatabase,ref,onValue,set}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import{getDatabase,ref,onValue,set,remove}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import{getAuth,signInWithEmailAndPassword,onAuthStateChanged,signOut}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import{firebaseConfig}from"./firebase-config.js";
-const fb=initializeApp(firebaseConfig),db=getDatabase(fb),auth=getAuth(fb),M=ref(db,"match");
+const fb=initializeApp(firebaseConfig),db=getDatabase(fb),auth=getAuth(fb),M=ref(db,"match"),RR=ref(db,"rosters");
 const $=s=>document.querySelector(s),arr=x=>x?Object.values(x):[],esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
 const R=location.hash.slice(1);if(R==="display")document.documentElement.classList.add("display");
-let S=norm({}),ready=0,filled=0;
+let S=norm({}),ready=0,filled=0,RS={};
 function norm(s){s=s||{};const d={bpo:6,overs:10,maxW:10,cur:0,first:0,...s};
  d.teams=[0,1].map(i=>{const t=(s.teams||[])[i]||{};return{n:t.n||"Team "+"AB"[i],p:arr(t.p)}});
  d.inn=[0,1].map(i=>{const t=(s.inn||[])[i]||{};return{b:arr(t.b),st:t.st??-1,ns:t.ns??-1}});return d}
@@ -45,7 +45,13 @@ function view(){const k=S.cur,bat=k?1-S.first:S.first,c=calc(S,k),I=S.inn[k],T=S
  <div class=cd><div class=tt>This over</div>${tb||'<span class=mu>—</span>'}</div>${wp}</div>
  <div><div class=cd><div class=tt>Batting</div><table><tr><th>Batter<th>Runs<th>4s<th>6s<th>SR</tr>${rows}</table></div>
  <div class=cd><div class=tt>Runs per over</div>${bars(c)}</div></div></div>`}
-function adm(){if(!$("#sc"))return;if(!filled){filled=1;[0,1].forEach(i=>{$("#n"+i).value=S.teams[i].n;$("#p"+i).value=S.teams[i].p.join("\n")});$("#bpo").value=S.bpo;$("#ov").value=S.overs;$("#mw").value=S.maxW;$("#fi").value=S.first}
+const key=n=>n.trim().replace(/[.$#\[\]\/]/g,"_"),teamList=()=>Object.values(RS).map(t=>({n:t.n,p:arr(t.p)})).sort((a,b)=>a.n.localeCompare(b.n));
+function teamsUI(){if(!$("#reg"))return;const L=teamList();
+ $("#tl").innerHTML=L.length?L.map((t,i)=>`<div class=row style="margin:.3rem 0"><span style="flex:1"><b>${esc(t.n)}</b> <span class=mu>· ${t.p.length} players</span></span><button class=b data-e=${i}>Edit</button><button class=b data-d=${i}>Delete</button></div>`).join(""):'<span class=mu>No teams registered yet.</span>';
+ [0,1].forEach(i=>{const s=$("#n"+i),cur=s.value||S.teams[i].n;
+  s.innerHTML=`<option value="">— select team —</option>`+L.map(t=>`<option value="${esc(t.n)}">${esc(t.n)}</option>`).join("");
+  s.value=cur;if(s.selectedIndex<0)s.selectedIndex=0;const t=L.find(x=>x.n===s.value);$("#pv"+i).textContent=t?t.p.join(", "):""})}
+function adm(){if(!$("#sc"))return;if(!filled){filled=1;teamsUI();$("#bpo").value=S.bpo;$("#ov").value=S.overs;$("#mw").value=S.maxW;$("#fi").value=S.first}
  const k=S.cur,I=S.inn[k],c=calc(S,k),bat=k?1-S.first:S.first;
  const op=v=>`<option value="-1">— select —</option>`+names(bat).map((n,i)=>!(c.bt[i]&&c.bt[i].out)||i===v?`<option value="${i}" ${i===v?"selected":""}>${esc(n)}</option>`:"").join("");
  $("#ih").textContent=`Innings ${k+1} · ${S.teams[bat].n} batting`;$("#sc").textContent=`${c.R}/${c.W} (${ov(c)})`;
@@ -57,9 +63,11 @@ function ball(r){const k=S.cur,I=S.inn[k];if(over(S,k))return alert("This inning
  I.b.push(b);if(r%2)[I.st,I.ns]=[I.ns,I.st];if(lg&&(L+1)%S.bpo===0)[I.st,I.ns]=[I.ns,I.st];
  if(w){if(I.st===b.b)I.st=-1;else I.ns=-1}
  $("#nx").checked=1;$("#wk").checked=false;put()}
-function panel(){$("#app").innerHTML=`<div class=cd><div class=tt>Match setup</div>
- <div class=row><input id=n0 placeholder="Team 1 name"><input id=n1 placeholder="Team 2 name"></div>
- <div class=row><textarea id=p0 rows=6 placeholder="Team 1 players, one per line"></textarea><textarea id=p1 rows=6 placeholder="Team 2 players, one per line"></textarea></div>
+function panel(){$("#app").innerHTML=`<div class=cd id=reg><div class=tt>Team registry</div>
+ <div class=row><input id=rn placeholder="Team name"><textarea id=rp rows=6 placeholder="Players, one per line"></textarea><button class=b id=rsave>Save team</button></div>
+ <div id=tl></div></div>
+ <div class=cd><div class=tt>Match setup</div>
+ <div class=row><label>Team 1<select id=n0></select><span class=mu id=pv0></span></label><label>Team 2<select id=n1></select><span class=mu id=pv1></span></label></div>
  <div class=row><label>Balls per over<select id=bpo><option>6<option>4</select></label><label>Overs<input id=ov type=number min=1 style="width:5rem"></label><label>Max wickets<input id=mw type=number min=1 style="width:5rem"></label><label>Bats first<select id=fi><option value=0>Team 1<option value=1>Team 2</select></label><button class=b id=save>Save setup</button></div></div>
  <div class=cd><div class=tt id=ih></div><div class=big id=sc style="font-size:3.2rem"></div>
  <div class=row><label>Striker<select id=st></select></label><label>Non-striker<select id=ns></select></label></div>
@@ -67,9 +75,20 @@ function panel(){$("#app").innerHTML=`<div class=cd><div class=tt>Match setup</d
  <div class=mu>Pick the extra type and wicket first, then tap the runs.</div><div class=runs>${[0,1,2,3,4,5,6].map(r=>`<button class=b data-r=${r}>${r}</button>`).join("")}</div>
  <div class=row><button class=b id=undo>Undo last ball</button><button class=b id=in2>Start 2nd innings</button><button class=b id=csv>Export CSV</button><button class=b id=rst>Reset match</button><button class=b id=out>Sign out</button></div></div>`;
  ready=1;filled=0;adm();
+ $("#rsave").onclick=()=>{const n=$("#rn").value.trim(),p=$("#rp").value.split("\n").map(s=>s.trim()).filter(Boolean);
+  if(!n)return alert("Enter a team name.");if(p.length<2)return alert("Add at least 2 players.");
+  set(ref(db,"rosters/"+key(n)),{n,p}).then(()=>{$("#rn").value="";$("#rp").value=""}).catch(()=>alert("Could not save the team. Check the database rules and that you are signed in as an admin."))};
+ $("#tl").onclick=e=>{const b=e.target.closest("button");if(!b)return;const L=teamList();
+  if(b.dataset.e!==undefined){const t=L[+b.dataset.e];$("#rn").value=t.n;$("#rp").value=t.p.join("\n");$("#rn").scrollIntoView()}
+  else if(b.dataset.d!==undefined){const t=L[+b.dataset.d];if(confirm("Delete "+t.n+" from the registry?"))remove(ref(db,"rosters/"+key(t.n)))}};
+ $("#n0").onchange=$("#n1").onchange=teamsUI;
  $(".runs").onclick=e=>{const r=e.target.dataset.r;if(r!==undefined)ball(+r)};
  $("#st").onchange=e=>{S.inn[S.cur].st=+e.target.value;put()};$("#ns").onchange=e=>{S.inn[S.cur].ns=+e.target.value;put()};
- $("#save").onclick=()=>{S.teams=[0,1].map(i=>({n:$("#n"+i).value.trim()||"Team "+(i+1),p:$("#p"+i).value.split("\n").map(s=>s.trim()).filter(Boolean)}));
+ $("#save").onclick=()=>{const L=teamList(),t=[0,1].map(i=>L.find(x=>x.n===$("#n"+i).value));
+  if(!t[0]||!t[1])return alert("Select both teams first.");if(t[0].n===t[1].n)return alert("Pick two different teams.");
+  const chg=t.some((x,i)=>x.n!==S.teams[i].n||x.p.join("|")!==S.teams[i].p.join("|"));
+  if(chg&&S.inn.some(I=>I.b.length)&&!confirm("Balls are already recorded. Changing the teams or players can mix up the names in the scorecard. Continue?"))return;
+  S.teams=t.map(x=>({n:x.n,p:x.p}));
   S.bpo=+$("#bpo").value;S.overs=+$("#ov").value;S.maxW=+$("#mw").value;S.first=+$("#fi").value;put()};
  $("#undo").onclick=()=>{const I=S.inn[S.cur];if(!I.b.length){if(S.cur){S.cur=0;put()}return}const x=I.b.pop();I.st=x.ps;I.ns=x.pn;put()};
  $("#in2").onclick=()=>{if(confirm("Start the 2nd innings?")){S.cur=1;S.inn[1]={b:[],st:-1,ns:-1};put()}};
@@ -82,4 +101,4 @@ function login(){ready=0;$("#app").innerHTML=`<div class=cd><div class=tt>Admin 
 const render=()=>R==="admin"?adm():view();
 onValue(M,s=>{S=norm(s.val());render()});
 onValue(ref(db,".info/connected"),s=>{$("#live").className=s.val()?"on":"off"});
-if(R==="admin")onAuthStateChanged(auth,u=>u?panel():login());
+if(R==="admin"){onValue(RR,s=>{RS=s.val()||{};teamsUI()});onAuthStateChanged(auth,u=>u?panel():login())}
