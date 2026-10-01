@@ -1,0 +1,28 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>DataDash 2.0 Live</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--cy:#22d3e6;--tx:#e9f3ff;--mu:#8aa3bf;--cd:rgba(12,28,50,.82);--ln:rgba(34,211,230,.25)}
+*{box-sizing:border-box}html{font-size:16px}html.display{font-size:1.15vw}
+body{margin:0;min-height:100vh;color:var(--tx);font:1rem Inter,system-ui,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+background:linear-gradient(115deg,transparent 78%,rgba(34,211,230,.35) 78.2%,transparent 79.5%),radial-gradient(60rem 30rem at 8% -8%,#0f4a7a,transparent 60%),#040b18}
+.hd,.wrap{max-width:60rem;margin:auto;padding:.8rem 1rem}html.display .hd,html.display .wrap{max-width:90rem}
+.hd{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.pill{background:#fff;border-radius:999px;padding:.35rem 1rem;display:flex;align-items:center;gap:.8rem}.pill img{height:2.4rem}.dd{height:3.6rem}
+#live{font:italic 800 1rem 'Barlow Condensed';letter-spacing:.1em;color:#ff4d6d}#live.on{color:#2ee59d}#live:before{content:"● ";animation:p 1.4s infinite}@keyframes p{50%{opacity:.3}}
+.grid{display:grid;gap:1rem}html.display .grid{grid-template-columns:1.1fr 1fr}
+.cd{background:var(--cd);border:1px solid var(--ln);border-radius:1rem;padding:1rem;margin-bottom:1rem}
+.tt{font:italic 800 1.15rem 'Barlow Condensed';letter-spacing:.06em;color:var(--cy);margin-bottom:.5rem}
+.big{font:italic 800 5.5rem/1 'Barlow Condensed'}.mu{color:var(--mu)}
+.chip{display:inline-block;background:rgba(34,211,230,.12);border:1px solid var(--ln);border-radius:.6rem;padding:.4rem .7rem;margin:.2rem .3rem .2rem 0}
+table{width:100%;border-collapse:collapse}th{color:var(--mu);font-weight:400;text-align:right}td{text-align:right;padding:.4rem 0;border-top:1px solid var(--ln)}th:first-child,td:first-child{text-align:left}tr.o td{color:var(--mu)}
+.ball{display:inline-grid;place-items:center;min-width:2rem;height:2rem;padding:0 .3rem;border-radius:1rem;background:#12304f;margin-right:.3rem;font-weight:600}.ball.f{background:#0e7490}.ball.s{background:#16a34a}.ball.w{background:#e11d48}
+.bar{height:1.2rem;border-radius:1rem;overflow:hidden;display:flex;background:#12304f}.bar i{display:block;background:var(--cy)}.sp{display:flex;justify-content:space-between;margin-top:.4rem}
+.res{font:italic 800 1.8rem 'Barlow Condensed';color:#fbbf24}
+input,select,textarea,.b{background:#0b1f38;color:var(--tx);border:1px solid var(--ln);border-radius:.6rem;padding:.6rem .8rem;font:inherit;max-width:100%}
+.row{display:flex;flex-wrap:wrap;gap:.6rem;margin:.6rem 0;align-items:end}.row label{display:grid;gap:.2rem;color:var(--mu)}textarea{flex:1;min-width:12rem}
+.b{cursor:pointer}.b:hover{border-color:var(--cy)}.runs{display:grid;grid-template-columns:repeat(7,1fr);gap:.4rem;margin:.8rem 0}.runs .b{font:italic 800 1.8rem 'Barlow Condensed';padding:.8rem 0}
+svg{width:100%;display:block}
+</style></head><body>
+<div class="hd"><div class="pill"><img src="assets/kdu.png" alt="KDU"><img src="assets/datainspire.png" alt="DatAInspire"></div><span id="live" class="off">LIVE</span><img class="dd" src="assets/datadash.png" alt="DataDash 2.0"></div>
+<main class="wrap" id="app"><div class="cd mu">Waiting for the match to start…</div></main>
+<script type="module" src="app.js"></script></body></html>

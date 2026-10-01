@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "match": {
+      ".read": true,
+      ".write": "auth != null && (auth.token.email == 'seshanperera2004@gmail.com' || auth.token.email == 'admin2@example.com')"
+    }
+  }
+}
