@@ -5,7 +5,7 @@ import{firebaseConfig}from"./firebase-config.js";
 const fb=initializeApp(firebaseConfig),db=getDatabase(fb),auth=getAuth(fb),M=ref(db,"match"),RR=ref(db,"rosters");
 const $=s=>document.querySelector(s),arr=x=>x?Object.values(x):[],esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
 const R=location.hash.slice(1);if(R==="display")document.documentElement.classList.add("display");
-let S=norm({}),ready=0,filled=0,C={},tab="live",mine=0,last=0,RS={};
+let S=norm({}),ready=0,filled=0,C={},tab=R==="draw"?"draw":R==="fans"?"fans":"live",mine=0,last=0,RS={};
 function norm(s){s=s||{};const d={bpo:6,overs:10,maxW:10,cur:0,first:0,...s};
  d.teams=[0,1].map(i=>{const t=(s.teams||[])[i]||{};return{n:t.n||"Team "+"AB"[i],p:arr(t.p)}});
  d.inn=[0,1].map(i=>{const t=(s.inn||[])[i]||{};return{b:arr(t.b),st:t.st??-1,ns:t.ns??-1}});
@@ -44,7 +44,7 @@ function drawView(){const o=[],r=node("m11",o),w=win("m11");o.push(`<path d="M${
 function fans(){const n=i=>C[i]||0,o=top(),mx=Math.max(1,n(o[0]));
  return`<div class=cd><div class=tt>Cheer for your team</div><div class=row><select id=ft>${S.draw.t.map((t,i)=>`<option value=${i} ${i===mine?"selected":""}>${esc(t.n)}</option>`).join("")}</select><button class="b cheer" data-cheer=1>Cheer!</button></div></div>
  <div class=cd><div class=tt>Best supporting team</div>${o.map((i,r)=>`<div class=lb><span>${r+1}. ${esc(S.draw.t[i].n)}${r===0&&n(i)?" ★":""}</span><span class=bar><i style="width:${n(i)/mx*100}%"></i></span><b>${n(i)}</b></div>`).join("")}</div>`}
-function bn(){const t=top()[0];return`<button class=bn data-go=fans>${C[t]?`Best supporters: ${esc(S.draw.t[t].n)} · ${C[t]} cheers. Tap to cheer for yours`:"Cheer for your team! Tap to join the support meter"}</button>`}
+function banner(){const el=$("#bnr");if(!el)return;const t=top()[0];el.textContent=C[t]?`★ Best supporting team: ${S.draw.t[t].n} · ${C[t]} cheers`:"★ Best supporting team: be the first to cheer for yours!"}
 function view(){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("on",b.dataset.t===tab));$("#app").innerHTML=tab==="draw"?drawView():tab==="fans"?fans():live()}
 function dmx(){return Object.keys(MT).map(m=>{const p=MT[m].map(part),w=win(m),no=p.includes(null);return`<div class=row style="align-items:center"><b style="width:3rem">M${m.slice(1)}</b>${no?'<span class=mu style="flex:1">Waiting for earlier winners</span>':p.map(t=>`<button class=b data-w="${m}:${t}" style="${w===t?"border-color:#22d3e6;color:#22d3e6":""}">${esc(tn(t))} won</button>`).join('<span class=mu>vs</span>')}<button class=b data-live=${m} ${no?"disabled":""}>${S.live===m?"Live now":"Go live"}</button></div>`}).join("")}
 function live(){const k=S.cur,bat=k?1-S.first:S.first,c=calc(S,k),I=S.inn[k],T=S.teams,left=S.overs*S.bpo-c.L,a=calc(S,0);
@@ -58,7 +58,7 @@ function live(){const k=S.cur,bat=k?1-S.first:S.first,c=calc(S,k),I=S.inn[k],T=S
  const rows=ids.map(i=>{const q=c.bt[i]||{r:0,b:0,f:0,s:0};return`<tr class="${q.out?"o":""}"><td>${esc(nm(bat,i))}${i===I.st?" *":""}</td><td><b>${q.r}</b> (${q.b})</td><td>${q.f}</td><td>${q.s}</td><td>${q.b?Math.round(q.r*100/q.b):"-"}</td></tr>`}).join("");
  const co=c.L&&c.L%S.bpo===0?c.L/S.bpo-1:Math.floor(c.L/S.bpo),tb=c.bl.filter(z=>z.o===co).map(z=>`<span class="ball ${z.c}">${z.l}</span>`).join("");
  const tm=t=>{const j=t===S.first?0:1,x=calc(S,j);return`<div class="tm ${t===bat?"on":""}"><div class=nmx>${esc(T[t].n)}</div><div class=mu>${j>k?"Yet to bat":`${x.R}/${x.W} (${ov(x)})`}</div>${t===bat?"<span class=chip>Batting</span>":""}</div>`};
- return`${bn()}<div class="cd vs">${tm(0)}<b class=vsx>VS</b>${tm(1)}</div><div class=grid><div><div class=cd><div class=tt>${esc(T[bat].n)} · Innings ${k+1}</div><div class=big>${c.R}/${c.W}</div><div class=mu>${ov(c)} / ${S.overs} overs · CRR ${crr}</div>
+ return`<div class="cd vs">${tm(0)}<b class=vsx>VS</b>${tm(1)}</div><div class=grid><div><div class=cd><div class=tt>${esc(T[bat].n)} · Innings ${k+1}</div><div class=big>${c.R}/${c.W}</div><div class=mu>${ov(c)} / ${S.overs} overs · CRR ${crr}</div>
  <div style="margin-top:.6rem">${ch}</div>${k?`<div class=mu>${esc(T[1-bat].n)}: ${a.R}/${a.W} (${ov(a)})</div>`:""}${res?`<div class=res>${esc(res)}</div>`:""}</div>
  <div class=cd><div class=tt>This over</div>${tb||'<span class=mu>—</span>'}</div>${wp}</div>
  <div><div class=cd><div class=tt>Batting</div><table><tr><th>Batter<th>Runs<th>4s<th>6s<th>SR</tr>${rows}</table></div>
@@ -123,12 +123,15 @@ function panel(){$("#app").innerHTML=`<div class=cd id=reg><div class=tt>Team re
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([r.join("\n")],{type:"text/csv"}));a.download="datadash-balls.csv";a.click()}}
 function login(){ready=0;$("#app").innerHTML=`<div class=cd><div class=tt>Admin sign in</div><div class=row><input id=em type=email placeholder="Email"><input id=pw type=password placeholder="Password"><button class=b id=go>Sign in</button></div></div>`;
  $("#go").onclick=()=>signInWithEmailAndPassword(auth,$("#em").value,$("#pw").value).catch(()=>alert("Sign in failed. Check your email and password."))}
-const render=()=>R==="admin"?adm():view();
+const render=()=>{banner();R==="admin"?adm():view()};
 onValue(M,s=>{S=norm(s.val());render()});
 onValue(ref(db,"cheers"),s=>{C=s.val()||{};if(R!=="admin")render()});
 onValue(ref(db,".info/connected"),s=>{$("#live").className=s.val()?"on":"off"});
 if(R==="admin"){onValue(RR,s=>{RS=s.val()||{};teamsUI()});onAuthStateChanged(auth,u=>u?panel():login())}
 
-if(R!=="admin"){$("#tabs").innerHTML=[["live","Live score"],["draw","Draw"],["fans","Support"]].map(x=>`<button class=tab data-t=${x[0]}>${x[1]}</button>`).join("");$("#tabs").onclick=e=>{if(e.target.dataset.t){tab=e.target.dataset.t;view()}}}else $("#tabs").style.display="none";
+if(!$("#tabs"))$("#app").insertAdjacentHTML("beforebegin",'<nav class="tabs wrap" id="tabs"></nav>');
+if(!$("#bnr"))$("#tabs").insertAdjacentHTML("beforebegin",'<div class=wrap><button class=bn id=bnr></button></div>');
+if(R!=="admin"){$("#tabs").innerHTML=[["live","Live score"],["draw","Draw"],["fans","Support"]].map(x=>`<button class=tab data-t=${x[0]}>${x[1]}</button>`).join("");$("#tabs").onclick=e=>{if(e.target.dataset.t){tab=e.target.dataset.t;view()}}}else{$("#tabs").style.display="none";$("#bnr").parentElement.style.display="none"}
+$("#bnr").onclick=()=>{if(R!=="admin"){tab="fans";view()}};
 $("#app").addEventListener("click",e=>{const d=e.target.dataset;if(d.go){tab=d.go;view()}if(d.cheer&&Date.now()-last>350){last=Date.now();set(ref(db,"cheers/"+mine),increment(1))}});
 $("#app").addEventListener("change",e=>{if(e.target.id==="ft")mine=+e.target.value});
