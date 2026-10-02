@@ -2,7 +2,19 @@
   "rules": {
     "match": {
       ".read": true,
-      ".write": "auth != null && (auth.token.email == 'seshanperera2004@gmail.com' || auth.token.email == 'admin2@example.com')"
+      ".write": "auth != null && (auth.token.email == 'admin1@example.com' || auth.token.email == 'admin2@example.com')"
+    },
+    "rosters": {
+      ".read": "auth != null",
+      ".write": "auth != null && (auth.token.email == 'admin1@example.com' || auth.token.email == 'admin2@example.com')"
+    },
+    "cheers": {
+      ".read": true,
+      ".write": "auth != null && (auth.token.email == 'admin1@example.com' || auth.token.email == 'admin2@example.com')",
+      "$t": {
+        ".write": "$t.matches(/^([0-9]|1[01])$/)",
+        ".validate": "newData.isNumber() && (auth != null || newData.val() - (data.exists() ? data.val() : 0) == 1)"
+      }
     }
   }
 }
