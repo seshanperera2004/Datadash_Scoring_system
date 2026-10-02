@@ -2,6 +2,7 @@ import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-ap
 import{getDatabase,ref,onValue,set,increment,remove}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import{getAuth,signInWithEmailAndPassword,onAuthStateChanged,signOut}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import{firebaseConfig}from"./firebase-config.js";
+if(/PASTE/.test(JSON.stringify(firebaseConfig)))throw new Error("firebase-config.js still contains PASTE_HERE. Paste your Firebase web app config into it.");
 const fb=initializeApp(firebaseConfig),db=getDatabase(fb),auth=getAuth(fb),M=ref(db,"match"),RR=ref(db,"rosters");
 const $=s=>document.querySelector(s),arr=x=>x?Object.values(x):[],esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
 const R=location.hash.slice(1);if(R==="display")document.documentElement.classList.add("display");
@@ -33,14 +34,7 @@ function bars(c){const n=Math.max(S.overs,c.ov.length),m=Math.max(6,...c.ov),w=3
   return`<rect x="${x+2}" y="${100-h}" width="${w-4}" height="${h}" rx="2" fill="#22d3e6" opacity=".85"/>`+(v?`<text x="${x+w/2}" y="108" font-size="7" fill="#8aa3bf" text-anchor="middle">${v}</text>`:"")+(c.ow[i]?`<circle cx="${x+w/2}" cy="${95-h}" r="3.5" fill="#ff4d6d"/>`:"")}).join("")+`</svg>`}
 const MT={m1:[2,3],m2:[4,5],m3:[6,7],m4:[8,9],m5:[0,1],m6:[10,11],m7:["m1","m2"],m8:["m3","m4"],m9:["m5","m7"],m10:["m8","m6"],m11:["m9","m10"]};
 const win=m=>{const w=S.draw.w[m];return w==null?null:+w},part=c=>typeof c==="number"?c:win(c),tn=i=>i==null?"?":S.draw.t[i].n,top=()=>[...Array(12).keys()].sort((a,b)=>(C[b]||0)-(C[a]||0));
-function node(c,o){
- if(typeof c==="number"){const y=24+c*36;o.push(`<path d="M0 ${y}H170"/><text x="4" y="${y-6}">${esc(tn(c))}</text>`);return{x:170,y,h:0}}
- const a=MT[c].map(z=>node(z,o)),h=1+Math.max(a[0].h,a[1].h),x=170+h*100,y=(a[0].y+a[1].y)/2,w=win(c),lv=S.live===c;
- o.push(`<path d="M${a[0].x} ${a[0].y}H${x}V${a[1].y}H${a[1].x}"/><text class="m ${lv?"lv":""}" x="${x+6}" y="${y+16}">M${c.slice(1)}${lv?" LIVE":""}</text>`);
- if(w!==null)o.push(`<text class="w" x="${x+6}" y="${y-6}">${esc(tn(w).slice(0,13))}</text>`);
- return{x,y,h}}
-function drawView(){const o=[],r=node("m11",o),w=win("m11");o.push(`<path d="M${r.x} ${r.y}h60"/><text class="w" x="${r.x+8}" y="${r.y-8}">${w===null?"Champion":esc(tn(w).slice(0,13))}</text>`);
- return`<div class=cd><div class=tt>Tournament draw</div><div style="overflow-x:auto"><svg class="dr" viewBox="0 0 720 440" style="min-width:660px">${o.join("")}</svg></div></div>`}
+function drawView(){return`<div class=cd><div class=tt>Tournament draw</div>${window.bracket(tn,win,S.live)}</div>`}
 function fans(){const n=i=>C[i]||0,o=top(),mx=Math.max(1,n(o[0]));
  return`<div class=cd><div class=tt>Cheer for your team</div><div class=row><select id=ft>${S.draw.t.map((t,i)=>`<option value=${i} ${i===mine?"selected":""}>${esc(t.n)}</option>`).join("")}</select><button class="b cheer" data-cheer=1>Cheer!</button></div></div>
  <div class=cd><div class=tt>Best supporting team</div>${o.map((i,r)=>`<div class=lb><span>${r+1}. ${esc(S.draw.t[i].n)}${r===0&&n(i)?" ★":""}</span><span class=bar><i style="width:${n(i)/mx*100}%"></i></span><b>${n(i)}</b></div>`).join("")}</div>`}
@@ -124,7 +118,7 @@ function panel(){$("#app").innerHTML=`<div class=cd id=reg><div class=tt>Team re
 function login(){ready=0;$("#app").innerHTML=`<div class=cd><div class=tt>Admin sign in</div><div class=row><input id=em type=email placeholder="Email"><input id=pw type=password placeholder="Password"><button class=b id=go>Sign in</button></div></div>`;
  $("#go").onclick=()=>signInWithEmailAndPassword(auth,$("#em").value,$("#pw").value).catch(()=>alert("Sign in failed. Check your email and password."))}
 const render=()=>{banner();R==="admin"?adm():view()};
-onValue(M,s=>{S=norm(s.val());render()});
+onValue(M,s=>{S=norm(s.val());render()},err=>{$("#app").innerHTML=`<div class=cd>Could not read the match data: ${esc(err.message)}. Check the database rules and the databaseURL in firebase-config.js.</div>`});
 onValue(ref(db,"cheers"),s=>{C=s.val()||{};if(R!=="admin")render()});
 onValue(ref(db,".info/connected"),s=>{$("#live").className=s.val()?"on":"off"});
 if(R==="admin"){onValue(RR,s=>{RS=s.val()||{};teamsUI()});onAuthStateChanged(auth,u=>u?panel():login())}
