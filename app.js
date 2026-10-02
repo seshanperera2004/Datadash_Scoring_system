@@ -1,16 +1,16 @@
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import{getDatabase,ref,onValue,set,increment,remove}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import{getDatabase,ref,onValue,set,remove}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import{getAuth,signInWithEmailAndPassword,onAuthStateChanged,signOut}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import{firebaseConfig}from"./firebase-config.js";
 if(/PASTE/.test(JSON.stringify(firebaseConfig)))throw new Error("firebase-config.js still contains PASTE_HERE. Paste your Firebase web app config into it.");
 const fb=initializeApp(firebaseConfig),db=getDatabase(fb),auth=getAuth(fb),M=ref(db,"match"),RR=ref(db,"rosters");
 const $=s=>document.querySelector(s),arr=x=>x?Object.values(x):[],esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
 const R=location.hash.slice(1);if(R==="display")document.documentElement.classList.add("display");
-let S=norm({}),ready=0,filled=0,C={},tab=R==="draw"?"draw":R==="fans"?"fans":"live",mine=0,last=0,RS={};
+let S=norm({}),ready=0,filled=0,tab=R==="draw"?"draw":"live",RS={};
 function norm(s){s=s||{};const d={bpo:6,overs:10,maxW:10,cur:0,first:0,...s};
  d.teams=[0,1].map(i=>{const t=(s.teams||[])[i]||{};return{n:t.n||"Team "+"AB"[i],p:arr(t.p)}});
  d.inn=[0,1].map(i=>{const t=(s.inn||[])[i]||{};return{b:arr(t.b),st:t.st??-1,ns:t.ns??-1}});
- d.draw={t:Array.from({length:12},(_,i)=>{const x=(s.draw?.t||[])[i]||{};return{n:x.n||"Team "+"ABCDEFGHIJKL"[i],p:arr(x.p)}}),w:{...(s.draw?.w||{})}};d.live=s.live||"";return d}
+ d.draw={t:Array.from({length:12},(_,i)=>{const x=(s.draw?.t||[])[i]||{};return{n:x.n||"Team "+"ABCDEFGHIJKL"[i],p:arr(x.p)}}),w:{...(s.draw?.w||{})}};d.live=s.live||"";d.sup=String(s.sup||"");return d}
 const put=()=>set(M,S),nm=(t,i)=>S.teams[t].p[i]||"Player "+(i+1),names=t=>Array.from({length:Math.max(S.teams[t].p.length,2)},(_,i)=>nm(t,i));
 const ov=c=>Math.floor(c.L/S.bpo)+"."+c.L%S.bpo;
 function calc(S,k){const bt={},o_=[],ow=[],bl=[];let R=0,W=0,L=0;
@@ -33,13 +33,10 @@ function bars(c){const n=Math.max(S.overs,c.ov.length),m=Math.max(6,...c.ov),w=3
  return`<svg viewBox="0 0 300 110">`+Array.from({length:n},(_,i)=>{const v=c.ov[i]||0,h=v/m*85,x=i*w;
   return`<rect x="${x+2}" y="${100-h}" width="${w-4}" height="${h}" rx="2" fill="#22d3e6" opacity=".85"/>`+(v?`<text x="${x+w/2}" y="108" font-size="7" fill="#8aa3bf" text-anchor="middle">${v}</text>`:"")+(c.ow[i]?`<circle cx="${x+w/2}" cy="${95-h}" r="3.5" fill="#ff4d6d"/>`:"")}).join("")+`</svg>`}
 const MT={m1:[2,3],m2:[4,5],m3:[6,7],m4:[8,9],m5:[0,1],m6:[10,11],m7:["m1","m2"],m8:["m3","m4"],m9:["m5","m7"],m10:["m8","m6"],m11:["m9","m10"]};
-const win=m=>{const w=S.draw.w[m];return w==null?null:+w},part=c=>typeof c==="number"?c:win(c),tn=i=>i==null?"?":S.draw.t[i].n,top=()=>[...Array(12).keys()].sort((a,b)=>(C[b]||0)-(C[a]||0));
+const win=m=>{const w=S.draw.w[m];return w==null?null:+w},part=c=>typeof c==="number"?c:win(c),tn=i=>i==null?"?":S.draw.t[i].n;
 function drawView(){return`<div class=cd><div class=tt>Tournament draw</div>${window.bracket(tn,win,S.live)}</div>`}
-function fans(){const n=i=>C[i]||0,o=top(),mx=Math.max(1,n(o[0]));
- return`<div class=cd><div class=tt>Cheer for your team</div><div class=row><select id=ft>${S.draw.t.map((t,i)=>`<option value=${i} ${i===mine?"selected":""}>${esc(t.n)}</option>`).join("")}</select><button class="b cheer" data-cheer=1>Cheer!</button></div></div>
- <div class=cd><div class=tt>Best supporting team</div>${o.map((i,r)=>`<div class=lb><span>${r+1}. ${esc(S.draw.t[i].n)}${r===0&&n(i)?" ★":""}</span><span class=bar><i style="width:${n(i)/mx*100}%"></i></span><b>${n(i)}</b></div>`).join("")}</div>`}
-function banner(){const el=$("#bnr");if(!el)return;const t=top()[0];el.textContent=C[t]?`★ Best supporting team: ${S.draw.t[t].n} · ${C[t]} cheers`:"★ Best supporting team: be the first to cheer for yours!"}
-function view(){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("on",b.dataset.t===tab));$("#app").innerHTML=tab==="draw"?drawView():tab==="fans"?fans():live()}
+function banner(){const el=$("#bnr");if(!el)return;el.textContent="★ Best supporting team: "+S.sup;el.parentElement.style.display=S.sup&&R!=="admin"?"":"none"}
+function view(){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("on",b.dataset.t===tab));$("#app").innerHTML=tab==="draw"?drawView():live()}
 function dmx(){return Object.keys(MT).map(m=>{const p=MT[m].map(part),w=win(m),no=p.includes(null);return`<div class=row style="align-items:center"><b style="width:3rem">M${m.slice(1)}</b>${no?'<span class=mu style="flex:1">Waiting for earlier winners</span>':p.map(t=>`<button class=b data-w="${m}:${t}" style="${w===t?"border-color:#22d3e6;color:#22d3e6":""}">${esc(tn(t))} won</button>`).join('<span class=mu>vs</span>')}<button class=b data-live=${m} ${no?"disabled":""}>${S.live===m?"Live now":"Go live"}</button></div>`}).join("")}
 function live(){const k=S.cur,bat=k?1-S.first:S.first,c=calc(S,k),I=S.inn[k],T=S.teams,left=S.overs*S.bpo-c.L,a=calc(S,0);
  const crr=c.L?(c.R*S.bpo/c.L).toFixed(2):"0.00";let ch="",wp="",res="";
@@ -61,8 +58,8 @@ const key=n=>n.trim().replace(/[.$#\[\]\/]/g,"_"),teamList=()=>Object.values(RS)
 function teamsUI(){if(!$("#reg"))return;const L=teamList(),opt=L.map(t=>`<option value="${esc(t.n)}">${esc(t.n)}</option>`).join("");
  $("#tl").innerHTML=L.length?L.map((t,i)=>`<div class=row style="margin:.3rem 0"><span style="flex:1"><b>${esc(t.n)}</b> <span class=mu>· ${t.p.length} players</span></span><button class=b data-e=${i}>Edit</button><button class=b data-d=${i}>Delete</button></div>`).join(""):'<span class=mu>No teams registered yet.</span>';
  [0,1].forEach(i=>{const s=$("#n"+i),cur=s.value||S.teams[i].n;s.innerHTML=`<option value="">— select team —</option>`+opt;s.value=cur;if(s.selectedIndex<0)s.selectedIndex=0;const t=L.find(x=>x.n===s.value);$("#pv"+i).textContent=t?t.p.join(", "):""});
- for(let i=0;i<12;i++){const s=$("#dn"+i);if(!s)continue;const cur=s.value||S.draw.t[i].n;s.innerHTML=`<option value="">Team ${"ABCDEFGHIJKL"[i]} (unassigned)</option>`+opt;s.value=cur;if(s.selectedIndex<0)s.selectedIndex=0}}
-function adm(){if(!$("#sc"))return;if(!filled){filled=1;[0,1].forEach(i=>$("#n"+i).value="");teamsUI();$("#bpo").value=S.bpo;$("#ov").value=S.overs;$("#mw").value=S.maxW;$("#fi").value=S.first}
+ $("#spl").innerHTML=opt;for(let i=0;i<12;i++){const s=$("#dn"+i);if(!s)continue;const cur=s.value||S.draw.t[i].n;s.innerHTML=`<option value="">Team ${"ABCDEFGHIJKL"[i]} (unassigned)</option>`+opt;s.value=cur;if(s.selectedIndex<0)s.selectedIndex=0}}
+function adm(){if(!$("#sc"))return;if(!filled){filled=1;[0,1].forEach(i=>$("#n"+i).value="");teamsUI();$("#bpo").value=S.bpo;$("#ov").value=S.overs;$("#mw").value=S.maxW;$("#fi").value=S.first;$("#sp").value=S.sup}
  const k=S.cur,I=S.inn[k],c=calc(S,k),bat=k?1-S.first:S.first;
  const op=v=>`<option value="-1">— select —</option>`+names(bat).map((n,i)=>!(c.bt[i]&&c.bt[i].out)||i===v?`<option value="${i}" ${i===v?"selected":""}>${esc(n)}</option>`:"").join("");
  $("#ih").textContent=`Innings ${k+1} · ${S.teams[bat].n} batting`;$("#sc").textContent=`${c.R}/${c.W} (${ov(c)})`;
@@ -86,8 +83,9 @@ function panel(){$("#app").innerHTML=`<div class=cd id=reg><div class=tt>Team re
  <div class=row>${[["","Normal"],["wd","Wide"],["nb","No ball"],["b","Bye"],["lb","Leg bye"]].map((x,i)=>`<label style="display:flex;gap:.3rem;align-items:center"><input type=radio name=ex value="${x[0]}" ${i?"":"id=nx checked"}>${x[1]}</label>`).join("")}<label style="display:flex;gap:.3rem;align-items:center"><input type=checkbox id=wk>Wicket</label></div>
  <div class=mu>Pick the extra type and wicket first, then tap the runs.</div><div class=runs>${[0,1,2,3,4,5,6].map(r=>`<button class=b data-r=${r}>${r}</button>`).join("")}</div>
  <div class=row><button class=b id=undo>Undo last ball</button><button class=b id=in2>Start 2nd innings</button><button class=b id=csv>Export CSV</button><button class=b id=rst>Reset match</button><button class=b id=out>Sign out</button></div></div>
+ <div class=cd><div class=tt>Best supporting team banner</div><div class=row><input id=sp list=spl placeholder="Team name" style="flex:1"><datalist id=spl></datalist><button class=b id=sps>Show on banner</button><button class=b id=spc>Clear</button></div></div>
  <div class=cd><div class=tt>Draw · teams and winners</div>${[...Array(12).keys()].map(i=>`<div class=row><b style="width:5rem">Slot ${"ABCDEFGHIJKL"[i]}</b><select id=dn${i}></select></div>`).join("")}
- <button class=b id=sd>Save teams</button> <button class=b id=rc>Reset support votes</button><div id=dm style="margin-top:.8rem"></div></div>`;
+ <button class=b id=sd>Save teams</button><div id=dm style="margin-top:.8rem"></div></div>`;
  ready=1;filled=0;adm();
  $("#rsave").onclick=()=>{const n=$("#rn").value.trim(),p=$("#rp").value.split("\n").map(s=>s.trim()).filter(Boolean);
   if(!n)return alert("Enter a team name.");if(p.length<2)return alert("Add at least 2 players.");
@@ -109,7 +107,7 @@ function panel(){$("#app").innerHTML=`<div class=cd id=reg><div class=tt>Team re
  $("#rst").onclick=()=>{if(confirm("Reset the whole match? Scores will be erased.")){S=norm({...S,cur:0,inn:[]});put()}};
  $("#out").onclick=()=>signOut(auth);
  $("#sd").onclick=()=>{S.draw.t=[...Array(12).keys()].map(i=>{const n=$("#dn"+i).value,t=teamList().find(x=>x.n===n);return{n:n||"Team "+"ABCDEFGHIJKL"[i],p:t?t.p:[]}});put()};
- $("#rc").onclick=()=>{if(confirm("Clear all support votes?"))set(ref(db,"cheers"),null)};
+ $("#sps").onclick=()=>{S.sup=$("#sp").value.trim();put()};$("#spc").onclick=()=>{S.sup="";$("#sp").value="";put()};
  $("#dm").onclick=e=>{const d=e.target.dataset;
   if(d.w){const[m,t]=d.w.split(":");S.draw.w[m]=+t;for(const x of Object.keys(MT)){const w=win(x);if(w!==null&&!MT[x].map(part).includes(w))delete S.draw.w[x]}put()}
   if(d.live&&confirm("Start this match? The live scoreboard will be cleared.")){const[a,b]=MT[d.live].map(part),T=i=>{const n=S.draw.t[i].n,t=teamList().find(x=>x.n===n);return{n,p:t?t.p:S.draw.t[i].p}};S=norm({...S,live:d.live,cur:0,inn:[],teams:[T(a),T(b)],first:0});filled=0;put()}};
@@ -119,13 +117,9 @@ function login(){ready=0;$("#app").innerHTML=`<div class=cd><div class=tt>Admin 
  $("#go").onclick=()=>signInWithEmailAndPassword(auth,$("#em").value,$("#pw").value).catch(()=>alert("Sign in failed. Check your email and password."))}
 const render=()=>{banner();R==="admin"?adm():view()};
 onValue(M,s=>{S=norm(s.val());render()},err=>{$("#app").innerHTML=`<div class=cd>Could not read the match data: ${esc(err.message)}. Check the database rules and the databaseURL in firebase-config.js.</div>`});
-onValue(ref(db,"cheers"),s=>{C=s.val()||{};if(R!=="admin")render()});
 onValue(ref(db,".info/connected"),s=>{$("#live").className=s.val()?"on":"off"});
 if(R==="admin"){onValue(RR,s=>{RS=s.val()||{};teamsUI()});onAuthStateChanged(auth,u=>u?panel():login())}
 
 if(!$("#tabs"))$("#app").insertAdjacentHTML("beforebegin",'<nav class="tabs wrap" id="tabs"></nav>');
 if(!$("#bnr"))$("#tabs").insertAdjacentHTML("beforebegin",'<div class=wrap><button class=bn id=bnr></button></div>');
-if(R!=="admin"){$("#tabs").innerHTML=[["live","Live score"],["draw","Draw"],["fans","Support"]].map(x=>`<button class=tab data-t=${x[0]}>${x[1]}</button>`).join("");$("#tabs").onclick=e=>{if(e.target.dataset.t){tab=e.target.dataset.t;view()}}}else{$("#tabs").style.display="none";$("#bnr").parentElement.style.display="none"}
-$("#bnr").onclick=()=>{if(R!=="admin"){tab="fans";view()}};
-$("#app").addEventListener("click",e=>{const d=e.target.dataset;if(d.go){tab=d.go;view()}if(d.cheer&&Date.now()-last>350){last=Date.now();set(ref(db,"cheers/"+mine),increment(1))}});
-$("#app").addEventListener("change",e=>{if(e.target.id==="ft")mine=+e.target.value});
+if(R!=="admin"){$("#tabs").innerHTML=[["live","Live score"],["draw","Draw"]].map(x=>`<button class=tab data-t=${x[0]}>${x[1]}</button>`).join("");$("#tabs").onclick=e=>{if(e.target.dataset.t){tab=e.target.dataset.t;view()}}}else{$("#tabs").style.display="none";$("#bnr").parentElement.style.display="none"}
