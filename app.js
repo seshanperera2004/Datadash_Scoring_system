@@ -17,8 +17,8 @@ function calc(S,k){const bt={},o_=[],ow=[],bl=[];let R=0,W=0,L=0;
  for(const x of S.inn[k].b){const t=x.r+x.x,lg=x.e!=="wd"&&x.e!=="nb",o=Math.floor(L/S.bpo);
   while(o_.length<=o){o_.push(0);ow.push(0)}
   R+=t;o_[o]+=t;const q=bt[x.b]||(bt[x.b]={r:0,b:0,f:0,s:0,out:0});
-  if(x.e!=="wd")q.b++;q.r+=x.r;if(x.r===4)q.f++;if(x.r===6)q.s++;if(x.w){W++;ow[o]++;q.out=1}
-  bl.push({o,l:x.w?"W":x.e==="wd"?"Wd"+(x.x>1?"+"+(x.x-1):""):x.e==="nb"?"Nb"+(x.r?"+"+x.r:""):x.e?x.x+x.e:""+x.r,c:x.w?"w":!x.e&&x.r===4?"f":!x.e&&x.r===6?"s":""});
+  if(x.e!=="wd")q.b++;q.r+=x.r;if(x.r===4)q.f++;if(x.r===6)q.s++;if(x.w){W++;ow[o]++;const ob=x.ob??x.b;(bt[ob]||(bt[ob]={r:0,b:0,f:0,s:0,out:0})).out=1}
+  bl.push({o,l:x.w?(x.ob!=null&&x.ob!==x.b?(t||"")+"RO":"W"):x.e==="wd"?"Wd"+(x.x>1?"+"+(x.x-1):""):x.e==="nb"?"Nb"+(x.r?"+"+x.r:""):x.e?x.x+x.e:""+x.r,c:x.w?"w":!x.e&&x.r===4?"f":!x.e&&x.r===6?"s":""});
   if(lg)L++}
  return{R,W,L,bt,ov:o_,ow,bl}}
 function over(S,k){const c=calc(S,k);return c.W>=S.maxW||c.L>=S.overs*S.bpo||(k===1&&c.R>=calc(S,0).R+1)}
@@ -67,11 +67,11 @@ function adm(){if(!$("#sc"))return;if(!filled){filled=1;[0,1].forEach(i=>$("#n"+
  $("#st").innerHTML=op(I.st);$("#ns").innerHTML=op(I.ns);$("#in2").style.display=k?"none":"";$("#dm").innerHTML=dmx("men");$("#wdm").innerHTML=dmx("women")}
 function ball(r){const k=S.cur,I=S.inn[k];if(over(S,k))return alert("This innings is over.");
  if(I.st<0||I.ns<0)return alert("Select the striker and non-striker first.");
- const e=$("input[name=ex]:checked").value,w=$("#wk").checked?1:0,lg=e!=="wd"&&e!=="nb",L=calc(S,k).L,b={b:I.st,r:0,x:0,e,w,ps:I.st,pn:I.ns};
+ const e=$("input[name=ex]:checked").value,w=$("#wk").checked?1:0,lg=e!=="wd"&&e!=="nb",L=calc(S,k).L,b={b:I.st,r:0,x:0,e,w,ps:I.st,pn:I.ns},ob=$("#wo").value==="ns"?I.ns:I.st;if(w)b.ob=ob;
  if(e==="wd")b.x=1+r;else if(e==="nb"){b.x=1;b.r=r}else if(e==="b"||e==="lb")b.x=r;else b.r=r;
  I.b.push(b);if(r%2)[I.st,I.ns]=[I.ns,I.st];if(lg&&(L+1)%S.bpo===0)[I.st,I.ns]=[I.ns,I.st];
- if(w){if(I.st===b.b)I.st=-1;else I.ns=-1}
- $("#nx").checked=1;$("#wk").checked=false;put()}
+ if(w){if(I.st===ob)I.st=-1;else I.ns=-1}
+ $("#nx").checked=1;$("#wk").checked=false;$("#wo").value="st";put()}
 function panel(){$("#app").innerHTML=`<div class=cd id=reg><div class=tt>Team registry</div>
  <div class=row><input id=rn placeholder="Team name"><textarea id=rp rows=6 placeholder="Players, one per line"></textarea><button class=b id=rsave>Save team</button></div>
  <div id=tl></div></div>
@@ -81,13 +81,13 @@ function panel(){$("#app").innerHTML=`<div class=cd id=reg><div class=tt>Team re
  <div class=row><label>Balls per over<select id=bpo><option>6<option>4</select></label><label>Overs<input id=ov type=number min=1 style="width:5rem"></label><label>Max wickets<input id=mw type=number min=1 style="width:5rem"></label><label>Bats first<select id=fi><option value=0>Team 1<option value=1>Team 2</select></label><button class=b id=save>Save setup</button></div></div>
  <div class=cd><div class=tt id=ih></div><div class=big id=sc style="font-size:3.2rem"></div>
  <div class=row><label>Striker<select id=st></select></label><label>Non-striker<select id=ns></select></label></div>
- <div class=row>${[["","Normal"],["wd","Wide"],["nb","No ball"],["b","Bye"],["lb","Leg bye"]].map((x,i)=>`<label style="display:flex;gap:.3rem;align-items:center"><input type=radio name=ex value="${x[0]}" ${i?"":"id=nx checked"}>${x[1]}</label>`).join("")}<label style="display:flex;gap:.3rem;align-items:center"><input type=checkbox id=wk>Wicket</label></div>
- <div class=mu>Pick the extra type and wicket first, then tap the runs.</div><div class=runs>${[0,1,2,3,4,5,6].map(r=>`<button class=b data-r=${r}>${r}</button>`).join("")}</div>
+ <div class=row>${[["","Normal"],["wd","Wide"],["nb","No ball"],["b","Bye"],["lb","Leg bye"]].map((x,i)=>`<label style="display:flex;gap:.3rem;align-items:center"><input type=radio name=ex value="${x[0]}" ${i?"":"id=nx checked"}>${x[1]}</label>`).join("")}<label style="display:flex;gap:.3rem;align-items:center"><input type=checkbox id=wk>Wicket</label><label style="display:flex;gap:.3rem;align-items:center">Out: <select id=wo><option value=st>Striker<option value=ns>Non-striker (run out)</select></label></div>
+ <div class=mu>Pick the extra type and wicket first, then tap the runs. For a run out, tick Wicket, choose who is out, then tap the runs completed.</div><div class=runs>${[0,1,2,3,4,5,6].map(r=>`<button class=b data-r=${r}>${r}</button>`).join("")}</div>
  <div class=row><button class=b id=undo>Undo last ball</button><button class=b id=in2>Start 2nd innings</button><button class=b id=csv>Export CSV</button><button class=b id=rst>Reset match</button><button class=b id=out>Sign out</button></div></div>
  <div class=cd><div class=tt>Best supporting team banner</div><div class=row><input id=sp list=spl placeholder="Team name" style="flex:1"><datalist id=spl></datalist><button class=b id=sps>Show on banner</button><button class=b id=spc>Clear</button></div></div>
  <div class=cd><div class=tt>Men's draw · teams and winners</div>${[...Array(12).keys()].map(i=>`<div class=row><b style="width:5rem">Slot ${"ABCDEFGHIJKL"[i]}</b><select id=dn${i}></select></div>`).join("")}
- <button class=b id=sd>Save teams</button><div id=dm style="margin-top:.8rem"></div></div>
- <div class=cd><div class=tt>Women's draw · teams and winners</div>${[0,1,2,3].map(i=>`<div class=row><b style="width:5rem">Slot ${"ABCD"[i]}</b><select id=wn${i}></select></div>`).join("")}<button class=b id=wsd>Save women's teams</button><div id=wdm style="margin-top:.8rem"></div></div>`;
+ <button class=b id=sd>Save teams</button> <button class=b id=cw0>Clear winners</button><div id=dm style="margin-top:.8rem"></div></div>
+ <div class=cd><div class=tt>Women's draw · teams and winners</div>${[0,1,2,3].map(i=>`<div class=row><b style="width:5rem">Slot ${"ABCD"[i]}</b><select id=wn${i}></select></div>`).join("")}<button class=b id=wsd>Save women's teams</button> <button class=b id=cw1>Clear winners</button><div id=wdm style="margin-top:.8rem"></div></div>`;
  ready=1;filled=0;adm();
  $("#rsave").onclick=()=>{const n=$("#rn").value.trim(),p=$("#rp").value.split("\n").map(s=>s.trim()).filter(Boolean);
   if(!n)return alert("Enter a team name.");if(p.length<2)return alert("Add at least 2 players.");
@@ -110,11 +110,12 @@ function panel(){$("#app").innerHTML=`<div class=cd id=reg><div class=tt>Team re
  $("#out").onclick=()=>signOut(auth);
  $("#sd").onclick=()=>{S.draw.t=[...Array(12).keys()].map(i=>{const n=$("#dn"+i).value,t=teamList().find(x=>x.n===n);return{n:n||"Team "+"ABCDEFGHIJKL"[i],p:t?t.p:[]}});put()};
  $("#sps").onclick=()=>{S.sup=$("#sp").value.trim();put()};$("#spc").onclick=()=>{S.sup="";$("#sp").value="";put()};
+ [["#cw0","draw","m"],["#cw1","wdraw","w"]].forEach(([id,k,p])=>$(id).onclick=()=>{if(confirm("Clear all winners in this draw? Team names stay as they are.")){S[k].w={};if(S.live[0]===p)S.live="";put()}});
  $("#wsd").onclick=()=>{S.wdraw.t=[0,1,2,3].map(i=>{const n=$("#wn"+i).value,t=teamList().find(x=>x.n===n);return{n:n||"Team "+"ABCD"[i],p:t?t.p:[]}});put()};
  $("#dm").onclick=$("#wdm").onclick=e=>{const d=e.target.dataset;
-  if(d.w){const[m,t]=d.w.split(":"),D=dr(m);D.w[m]=+t;for(const x of Object.keys(MT)){if(dr(x)!==D)continue;const w=win(x);if(w!==null&&!MT[x].map(part).includes(w))delete D.w[x]}put()}
+  if(d.w){const[m,t]=d.w.split(":"),D=dr(m);if(D.w[m]!=null&&+D.w[m]===+t)delete D.w[m];else D.w[m]=+t;for(const x of Object.keys(MT)){if(dr(x)!==D)continue;const w=win(x);if(w!==null&&!MT[x].map(part).includes(w))delete D.w[x]}put()}
   if(d.live&&confirm("Start this match? The live scoreboard will be cleared.")){const m=d.live,D=dr(m),[a,b]=MT[m].map(part),T=i=>{const n=D.t[i].n,t=teamList().find(x=>x.n===n);return{n,p:t?t.p:D.t[i].p}};S=norm({...S,live:m,cur:0,inn:[],teams:[T(a),T(b)],first:0});filled=0;put()}};
- $("#csv").onclick=()=>{const r=["innings,ball,batter,bat_runs,extra,extra_runs,wicket"];S.inn.forEach((I,k)=>I.b.forEach((x,i)=>r.push([k+1,i+1,`"${nm(k?1-S.first:S.first,x.b)}"`,x.r,x.e,x.x,x.w].join(","))));
+ $("#csv").onclick=()=>{const r=["innings,ball,batter,bat_runs,extra,extra_runs,wicket,out_batter"];S.inn.forEach((I,k)=>I.b.forEach((x,i)=>r.push([k+1,i+1,`"${nm(k?1-S.first:S.first,x.b)}"`,x.r,x.e,x.x,x.w,x.w?`"${nm(k?1-S.first:S.first,x.ob??x.b)}"`:""].join(","))));
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([r.join("\n")],{type:"text/csv"}));a.download="datadash-balls.csv";a.click()}}
 function login(){ready=0;$("#app").innerHTML=`<div class=cd><div class=tt>Admin sign in</div><div class=row><input id=em type=email placeholder="Email"><input id=pw type=password placeholder="Password"><button class=b id=go>Sign in</button></div></div>`;
  $("#go").onclick=()=>signInWithEmailAndPassword(auth,$("#em").value,$("#pw").value).catch(()=>alert("Sign in failed. Check your email and password."))}
