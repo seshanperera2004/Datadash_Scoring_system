@@ -38,22 +38,26 @@ addEventListener("error",function(e){var t=e.target;if(t&&t!==window){if(t.tagNa
 addEventListener("unhandledrejection",function(e){showErr(e.reason&&e.reason.message||e.reason)});
 </script>
 <script>
-/* Knockout draw: 12 teams A-L as in the sketch */
+/* Knockout draws: men (12 teams A-L) and women (4 teams A-D), as in the final draw sheets */
 (function(){
-const MT={m1:[2,3],m2:[4,5],m3:[6,7],m4:[8,9],m5:[0,1],m6:[10,11],m7:["m1","m2"],m8:["m3","m4"],m9:["m5","m7"],m10:["m8","m6"],m11:["m9","m10"]};
 const esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const DR={
+ men:{n:12,root:"m11",M:{m1:[2,3],m2:[4,5],m3:[6,7],m4:[8,9],m5:[0,1],m6:[10,11],m7:["m1","m2"],m8:["m3","m4"],m9:["m5","m7"],m10:["m8","m6"],m11:["m9","m10"]}},
+ women:{n:4,root:"w3",M:{w1:[0,1],w2:[2,3],w3:["w1","w2"]}},
+ L:{m1:"Match 1",m2:"Match 2",m3:"Match 3",m4:"Match 4",m5:"QF 1",m7:"QF 2",m8:"QF 3",m6:"QF 4",m9:"SF 1",m10:"SF 2",m11:"Final",w1:"SF 1",w2:"SF 2",w3:"Final"},
+ F:{m1:"Match 1",m2:"Match 2",m3:"Match 3",m4:"Match 4",m5:"Quarter Final 1",m7:"Quarter Final 2",m8:"Quarter Final 3",m6:"Quarter Final 4",m9:"Semi Final 1",m10:"Semi Final 2",m11:"Final",w1:"Semi Final 1",w2:"Semi Final 2",w3:"Final"}};
 const X0=190,ST=90,Y0=26,RH=36;
-function bracket(tn,win,live){const o=[];
+function bracket(g,tn,win,live){const o=[],M=g.M;
  const node=c=>{
   if(typeof c==="number"){const y=Y0+c*RH;o.push(`<path d="M0 ${y}H${X0}"/><circle class="lt" cx="13" cy="${y-9}" r="12"/><text class="lt" x="13" y="${y-4}" text-anchor="middle">${"ABCDEFGHIJKL"[c]}</text><text x="34" y="${y-6}">${esc(tn(c).slice(0,15))}</text>`);return{x:X0,y,h:0}}
-  const a=MT[c].map(z=>node(z)),h=1+Math.max(a[0].h,a[1].h),x=X0+h*ST,y=(a[0].y+a[1].y)/2,w=win(c),lv=live===c;
-  o.push(`<path d="M${a[0].x} ${a[0].y}H${x}V${a[1].y}H${a[1].x}"/><text class="m${lv?" lv":""}" x="${x+6}" y="${y+16}">M${c.slice(1)}${lv?" LIVE":""}</text>`);
+  const a=M[c].map(z=>node(z)),h=1+Math.max(a[0].h,a[1].h),x=X0+h*ST,y=(a[0].y+a[1].y)/2,w=win(c),lv=live===c;
+  o.push(`<path d="M${a[0].x} ${a[0].y}H${x}V${a[1].y}H${a[1].x}"/><text class="m${lv?" lv":""}" x="${x+6}" y="${y+16}">${DR.L[c]}${lv?" LIVE":""}</text>`);
   if(w!==null)o.push(`<text class="w" x="${x+6}" y="${y-6}">${esc(tn(w).slice(0,12))}</text>`);
   return{x,y,h}};
- const r=node("m11"),w=win("m11");
+ const r=node(g.root),w=win(g.root),W=r.x+150,H=Y0+(g.n-1)*RH+16;
  o.push(`<path d="M${r.x} ${r.y}h50"/><text class="w" x="${r.x+8}" y="${r.y-8}">${w===null?"Champion":esc(tn(w).slice(0,12))}</text>`);
- return`<svg class="dr" viewBox="0 0 690 450"><style>.dr path{fill:none;stroke:#2b9ac4;stroke-width:2.5}.dr text{fill:#e9f3ff;font:600 19px Inter,sans-serif}.dr .w{fill:#22d3e6;font-weight:800}.dr .m{fill:#8aa3bf;font-size:13px}.dr .lv{fill:#ff4d6d;font-weight:800}.dr circle.lt{fill:#0e7490}.dr text.lt{fill:#fff;font-weight:800;font-size:15px}</style>${o.join("")}</svg>`}
-window.bracket=bracket;
+ return`<svg class="dr" viewBox="0 0 ${W} ${H}" style="max-width:${Math.round(W*1.4)}px;margin:0 auto"><style>.dr path{fill:none;stroke:#2b9ac4;stroke-width:2.5}.dr text{fill:#e9f3ff;font:600 19px Inter,sans-serif}.dr .w{fill:#22d3e6;font-weight:800}.dr .m{fill:#8aa3bf;font-size:13px}.dr .lv{fill:#ff4d6d;font-weight:800}.dr circle.lt{fill:#0e7490}.dr text.lt{fill:#fff;font-weight:800;font-size:15px}</style>${o.join("")}</svg>`}
+window.DR=DR;window.bracket=bracket;
 })();
 </script>
-<script type="module" src="app.js?v=8"></script></body></html>
+<script type="module" src="app.js?v=9"></script></body></html>

@@ -10,7 +10,7 @@ let S=norm({}),ready=0,filled=0,tab=R==="draw"?"draw":"live",RS={};
 function norm(s){s=s||{};const d={bpo:6,overs:10,maxW:10,cur:0,first:0,...s};
  d.teams=[0,1].map(i=>{const t=(s.teams||[])[i]||{};return{n:t.n||"Team "+"AB"[i],p:arr(t.p)}});
  d.inn=[0,1].map(i=>{const t=(s.inn||[])[i]||{};return{b:arr(t.b),st:t.st??-1,ns:t.ns??-1}});
- d.draw={t:Array.from({length:12},(_,i)=>{const x=(s.draw?.t||[])[i]||{};return{n:x.n||"Team "+"ABCDEFGHIJKL"[i],p:arr(x.p)}}),w:{...(s.draw?.w||{})}};d.live=s.live||"";d.sup=String(s.sup||"");return d}
+ d.draw={t:Array.from({length:12},(_,i)=>{const x=(s.draw?.t||[])[i]||{};return{n:x.n||"Team "+"ABCDEFGHIJKL"[i],p:arr(x.p)}}),w:{...(s.draw?.w||{})}};d.live=s.live||"";d.sup=String(s.sup||"");d.wdraw={t:Array.from({length:4},(_,i)=>{const x=(s.wdraw?.t||[])[i]||{};return{n:x.n||"Team "+"ABCD"[i],p:arr(x.p)}}),w:{...(s.wdraw?.w||{})}};return d}
 const put=()=>set(M,S),nm=(t,i)=>S.teams[t].p[i]||"Player "+(i+1),names=t=>Array.from({length:Math.max(S.teams[t].p.length,2)},(_,i)=>nm(t,i));
 const ov=c=>Math.floor(c.L/S.bpo)+"."+c.L%S.bpo;
 function calc(S,k){const bt={},o_=[],ow=[],bl=[];let R=0,W=0,L=0;
@@ -32,12 +32,12 @@ function winp(S){const t=calc(S,0).R+1,c=calc(S,1),tot=S.overs*S.bpo;if(c.R>=t)r
 function bars(c){const n=Math.max(S.overs,c.ov.length),m=Math.max(6,...c.ov),w=300/n;
  return`<svg viewBox="0 0 300 110">`+Array.from({length:n},(_,i)=>{const v=c.ov[i]||0,h=v/m*85,x=i*w;
   return`<rect x="${x+2}" y="${100-h}" width="${w-4}" height="${h}" rx="2" fill="#22d3e6" opacity=".85"/>`+(v?`<text x="${x+w/2}" y="108" font-size="7" fill="#8aa3bf" text-anchor="middle">${v}</text>`:"")+(c.ow[i]?`<circle cx="${x+w/2}" cy="${95-h}" r="3.5" fill="#ff4d6d"/>`:"")}).join("")+`</svg>`}
-const MT={m1:[2,3],m2:[4,5],m3:[6,7],m4:[8,9],m5:[0,1],m6:[10,11],m7:["m1","m2"],m8:["m3","m4"],m9:["m5","m7"],m10:["m8","m6"],m11:["m9","m10"]};
-const win=m=>{const w=S.draw.w[m];return w==null?null:+w},part=c=>typeof c==="number"?c:win(c),tn=i=>i==null?"?":S.draw.t[i].n;
-function drawView(){return`<div class=cd><div class=tt>Tournament draw</div>${window.bracket(tn,win,S.live)}</div>`}
+const DR=window.DR,MT={...DR.men.M,...DR.women.M},dr=m=>m[0]==="w"?S.wdraw:S.draw;
+const win=m=>{const w=dr(m).w[m];return w==null?null:+w},part=c=>typeof c==="number"?c:win(c),tn=(i,m)=>i==null?"?":dr(m).t[i].n;
+function drawView(){const b=(k,d)=>window.bracket(DR[k],i=>d.t[i].n,win,S.live);return`<div class=cd><div class=tt>Men's tournament</div>${b("men",S.draw)}<div class=mu style="margin-top:.5rem">QF = Quarter Final · SF = Semi Final</div></div><div class=cd><div class=tt>Women's tournament</div>${b("women",S.wdraw)}</div>`}
 function banner(){const el=$("#bnr");if(!el)return;el.textContent="★ Best supporting team: "+S.sup;el.parentElement.style.display=S.sup&&R!=="admin"?"":"none"}
 function view(){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("on",b.dataset.t===tab));$("#app").innerHTML=tab==="draw"?drawView():live()}
-function dmx(){return Object.keys(MT).map(m=>{const p=MT[m].map(part),w=win(m),no=p.includes(null);return`<div class=row style="align-items:center"><b style="width:3rem">M${m.slice(1)}</b>${no?'<span class=mu style="flex:1">Waiting for earlier winners</span>':p.map(t=>`<button class=b data-w="${m}:${t}" style="${w===t?"border-color:#22d3e6;color:#22d3e6":""}">${esc(tn(t))} won</button>`).join('<span class=mu>vs</span>')}<button class=b data-live=${m} ${no?"disabled":""}>${S.live===m?"Live now":"Go live"}</button></div>`}).join("")}
+function dmx(k){return Object.keys(DR[k].M).map(m=>{const p=MT[m].map(part),w=win(m),no=p.includes(null);return`<div class=row style="align-items:center"><b style="width:9rem">${DR.F[m]}</b>${no?'<span class=mu style="flex:1">Waiting for earlier winners</span>':p.map(t=>`<button class=b data-w="${m}:${t}" style="${w===t?"border-color:#22d3e6;color:#22d3e6":""}">${esc(tn(t,m))} won</button>`).join('<span class=mu>vs</span>')}<button class=b data-live=${m} ${no?"disabled":""}>${S.live===m?"Live now":"Go live"}</button></div>`}).join("")}
 function live(){const k=S.cur,bat=k?1-S.first:S.first,c=calc(S,k),I=S.inn[k],T=S.teams,left=S.overs*S.bpo-c.L,a=calc(S,0);
  const crr=c.L?(c.R*S.bpo/c.L).toFixed(2):"0.00";let ch="",wp="",res="";
  if(k){const t=a.R+1,need=Math.max(t-c.R,0),q=Math.round(winp(S)*100);
@@ -58,12 +58,13 @@ const key=n=>n.trim().replace(/[.$#\[\]\/]/g,"_"),teamList=()=>Object.values(RS)
 function teamsUI(){if(!$("#reg"))return;const L=teamList(),opt=L.map(t=>`<option value="${esc(t.n)}">${esc(t.n)}</option>`).join("");
  $("#tl").innerHTML=L.length?L.map((t,i)=>`<div class=row style="margin:.3rem 0"><span style="flex:1"><b>${esc(t.n)}</b> <span class=mu>· ${t.p.length} players</span></span><button class=b data-e=${i}>Edit</button><button class=b data-d=${i}>Delete</button></div>`).join(""):'<span class=mu>No teams registered yet.</span>';
  [0,1].forEach(i=>{const s=$("#n"+i),cur=s.value||S.teams[i].n;s.innerHTML=`<option value="">— select team —</option>`+opt;s.value=cur;if(s.selectedIndex<0)s.selectedIndex=0;const t=L.find(x=>x.n===s.value);$("#pv"+i).textContent=t?t.p.join(", "):""});
- $("#spl").innerHTML=opt;for(let i=0;i<12;i++){const s=$("#dn"+i);if(!s)continue;const cur=s.value||S.draw.t[i].n;s.innerHTML=`<option value="">Team ${"ABCDEFGHIJKL"[i]} (unassigned)</option>`+opt;s.value=cur;if(s.selectedIndex<0)s.selectedIndex=0}}
+ $("#spl").innerHTML=opt;for(let i=0;i<12;i++){const s=$("#dn"+i);if(!s)continue;const cur=s.value||S.draw.t[i].n;s.innerHTML=`<option value="">Team ${"ABCDEFGHIJKL"[i]} (unassigned)</option>`+opt;s.value=cur;if(s.selectedIndex<0)s.selectedIndex=0}
+ for(let i=0;i<4;i++){const s=$("#wn"+i);if(!s)continue;const cur=s.value||S.wdraw.t[i].n;s.innerHTML=`<option value="">Team ${"ABCD"[i]} (unassigned)</option>`+opt;s.value=cur;if(s.selectedIndex<0)s.selectedIndex=0}}
 function adm(){if(!$("#sc"))return;if(!filled){filled=1;[0,1].forEach(i=>$("#n"+i).value="");teamsUI();$("#bpo").value=S.bpo;$("#ov").value=S.overs;$("#mw").value=S.maxW;$("#fi").value=S.first;$("#sp").value=S.sup}
  const k=S.cur,I=S.inn[k],c=calc(S,k),bat=k?1-S.first:S.first;
  const op=v=>`<option value="-1">— select —</option>`+names(bat).map((n,i)=>!(c.bt[i]&&c.bt[i].out)||i===v?`<option value="${i}" ${i===v?"selected":""}>${esc(n)}</option>`:"").join("");
  $("#ih").textContent=`Innings ${k+1} · ${S.teams[bat].n} batting`;$("#sc").textContent=`${c.R}/${c.W} (${ov(c)})`;
- $("#st").innerHTML=op(I.st);$("#ns").innerHTML=op(I.ns);$("#in2").style.display=k?"none":"";$("#dm").innerHTML=dmx()}
+ $("#st").innerHTML=op(I.st);$("#ns").innerHTML=op(I.ns);$("#in2").style.display=k?"none":"";$("#dm").innerHTML=dmx("men");$("#wdm").innerHTML=dmx("women")}
 function ball(r){const k=S.cur,I=S.inn[k];if(over(S,k))return alert("This innings is over.");
  if(I.st<0||I.ns<0)return alert("Select the striker and non-striker first.");
  const e=$("input[name=ex]:checked").value,w=$("#wk").checked?1:0,lg=e!=="wd"&&e!=="nb",L=calc(S,k).L,b={b:I.st,r:0,x:0,e,w,ps:I.st,pn:I.ns};
@@ -84,8 +85,9 @@ function panel(){$("#app").innerHTML=`<div class=cd id=reg><div class=tt>Team re
  <div class=mu>Pick the extra type and wicket first, then tap the runs.</div><div class=runs>${[0,1,2,3,4,5,6].map(r=>`<button class=b data-r=${r}>${r}</button>`).join("")}</div>
  <div class=row><button class=b id=undo>Undo last ball</button><button class=b id=in2>Start 2nd innings</button><button class=b id=csv>Export CSV</button><button class=b id=rst>Reset match</button><button class=b id=out>Sign out</button></div></div>
  <div class=cd><div class=tt>Best supporting team banner</div><div class=row><input id=sp list=spl placeholder="Team name" style="flex:1"><datalist id=spl></datalist><button class=b id=sps>Show on banner</button><button class=b id=spc>Clear</button></div></div>
- <div class=cd><div class=tt>Draw · teams and winners</div>${[...Array(12).keys()].map(i=>`<div class=row><b style="width:5rem">Slot ${"ABCDEFGHIJKL"[i]}</b><select id=dn${i}></select></div>`).join("")}
- <button class=b id=sd>Save teams</button><div id=dm style="margin-top:.8rem"></div></div>`;
+ <div class=cd><div class=tt>Men's draw · teams and winners</div>${[...Array(12).keys()].map(i=>`<div class=row><b style="width:5rem">Slot ${"ABCDEFGHIJKL"[i]}</b><select id=dn${i}></select></div>`).join("")}
+ <button class=b id=sd>Save teams</button><div id=dm style="margin-top:.8rem"></div></div>
+ <div class=cd><div class=tt>Women's draw · teams and winners</div>${[0,1,2,3].map(i=>`<div class=row><b style="width:5rem">Slot ${"ABCD"[i]}</b><select id=wn${i}></select></div>`).join("")}<button class=b id=wsd>Save women's teams</button><div id=wdm style="margin-top:.8rem"></div></div>`;
  ready=1;filled=0;adm();
  $("#rsave").onclick=()=>{const n=$("#rn").value.trim(),p=$("#rp").value.split("\n").map(s=>s.trim()).filter(Boolean);
   if(!n)return alert("Enter a team name.");if(p.length<2)return alert("Add at least 2 players.");
@@ -108,9 +110,10 @@ function panel(){$("#app").innerHTML=`<div class=cd id=reg><div class=tt>Team re
  $("#out").onclick=()=>signOut(auth);
  $("#sd").onclick=()=>{S.draw.t=[...Array(12).keys()].map(i=>{const n=$("#dn"+i).value,t=teamList().find(x=>x.n===n);return{n:n||"Team "+"ABCDEFGHIJKL"[i],p:t?t.p:[]}});put()};
  $("#sps").onclick=()=>{S.sup=$("#sp").value.trim();put()};$("#spc").onclick=()=>{S.sup="";$("#sp").value="";put()};
- $("#dm").onclick=e=>{const d=e.target.dataset;
-  if(d.w){const[m,t]=d.w.split(":");S.draw.w[m]=+t;for(const x of Object.keys(MT)){const w=win(x);if(w!==null&&!MT[x].map(part).includes(w))delete S.draw.w[x]}put()}
-  if(d.live&&confirm("Start this match? The live scoreboard will be cleared.")){const[a,b]=MT[d.live].map(part),T=i=>{const n=S.draw.t[i].n,t=teamList().find(x=>x.n===n);return{n,p:t?t.p:S.draw.t[i].p}};S=norm({...S,live:d.live,cur:0,inn:[],teams:[T(a),T(b)],first:0});filled=0;put()}};
+ $("#wsd").onclick=()=>{S.wdraw.t=[0,1,2,3].map(i=>{const n=$("#wn"+i).value,t=teamList().find(x=>x.n===n);return{n:n||"Team "+"ABCD"[i],p:t?t.p:[]}});put()};
+ $("#dm").onclick=$("#wdm").onclick=e=>{const d=e.target.dataset;
+  if(d.w){const[m,t]=d.w.split(":"),D=dr(m);D.w[m]=+t;for(const x of Object.keys(MT)){if(dr(x)!==D)continue;const w=win(x);if(w!==null&&!MT[x].map(part).includes(w))delete D.w[x]}put()}
+  if(d.live&&confirm("Start this match? The live scoreboard will be cleared.")){const m=d.live,D=dr(m),[a,b]=MT[m].map(part),T=i=>{const n=D.t[i].n,t=teamList().find(x=>x.n===n);return{n,p:t?t.p:D.t[i].p}};S=norm({...S,live:m,cur:0,inn:[],teams:[T(a),T(b)],first:0});filled=0;put()}};
  $("#csv").onclick=()=>{const r=["innings,ball,batter,bat_runs,extra,extra_runs,wicket"];S.inn.forEach((I,k)=>I.b.forEach((x,i)=>r.push([k+1,i+1,`"${nm(k?1-S.first:S.first,x.b)}"`,x.r,x.e,x.x,x.w].join(","))));
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([r.join("\n")],{type:"text/csv"}));a.download="datadash-balls.csv";a.click()}}
 function login(){ready=0;$("#app").innerHTML=`<div class=cd><div class=tt>Admin sign in</div><div class=row><input id=em type=email placeholder="Email"><input id=pw type=password placeholder="Password"><button class=b id=go>Sign in</button></div></div>`;
